@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>PrivacySnapshot – See who’s tracking you</title>
+  <meta name="description" content="Privacy-first Chrome extension that scans websites for trackers, cookies, fingerprinting and third‑party requests. All local, no servers.">
+  <!-- Fonts & Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* custom overrides – human touches */
+    body {
+      background: #0b0e14;
+      background-image: radial-gradient(circle at 25% 40%, rgba(20, 140, 140, 0.08) 0%, #0b0e14 90%);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+    .card-rough {
+      transition: all 0.2s ease;
+      border: 1px solid rgba(70, 130, 200, 0.15);
+      background: rgba(18, 22, 30, 0.8);
+      backdrop-filter: blur(2px);
+    }
+    .card-rough:hover {
+      border-color: #2c7da0;
+      transform: translateY(-2px);
+      background: rgba(22, 28, 38, 0.9);
+    }
+    .btn-human {
+      background: linear-gradient(100deg, #1e6f5c, #2c7da0);
+      box-shadow: 0 6px 14px rgba(0,0,0,0.3);
+    }
+    .btn-human:hover {
+      background: linear-gradient(100deg, #1b5e4f, #236b8e);
+      transform: scale(0.98);
+    }
+    .mobile-nav-open {
+      max-height: 300px;
+      opacity: 1;
+    }
+    /* human spacing */
+    .prose-custom p {
+      margin-bottom: 1.2rem;
+      line-height: 1.6;
+    }
+    .faq-summary::-webkit-details-marker {
+      display: none;
+    }
+  </style>
+</head>
+<body class="text-gray-200">
+
+  <!-- header with mobile menu -->
+  <header class="sticky top-0 z-50 bg-[#0a0d12]/95 backdrop-blur-md border-b border-white/5">
+    <div class="max-w-6xl mx-auto px-5 py-3 flex justify-between items-center">
+      <div class="flex items-center gap-2">
+        <i class="fas fa-shield-haltered text-cyan-400 text-2xl"></i>
+        <span class="text-xl font-bold tracking-tight text-white">PrivacySnapshot</span>
+      </div>
+      <!-- desktop nav -->
+      <nav class="hidden md:flex gap-7 text-sm font-medium">
+        <a href="index.html" class="hover:text-cyan-300 transition">Home</a>
+        <a href="about.html" class="hover:text-cyan-300 transition">About</a>
+        <a href="privacy.html" class="hover:text-cyan-300 transition">Privacy</a>
+        <a href="contact.html" class="hover:text-cyan-300 transition">Contact</a>
+      </nav>
+      <!-- mobile burger -->
+      <button id="menuBtn" class="md:hidden text-2xl focus:outline-none"><i class="fas fa-bars"></i></button>
+    </div>
+    <!-- mobile dropdown -->
+    <div id="mobileMenu" class="md:hidden bg-[#0f1219] border-t border-white/10 px-5 py-0 max-h-0 overflow-hidden transition-all duration-300 ease-out">
+      <div class="flex flex-col gap-4 py-4 text-base">
+        <a href="index.html" class="hover:text-cyan-300">Home</a>
+        <a href="about.html" class="hover:text-cyan-300">About</a>
+        <a href="privacy.html" class="hover:text-cyan-300">Privacy Policy</a>
+        <a href="contact.html" class="hover:text-cyan-300">Contact</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-5 py-12 md:py-16">
+    <!-- hero -->
+    <div class="flex flex-col md:flex-row gap-12 items-center mb-24">
+      <div class="flex-1">
+        <h1 class="text-4xl md:text-5xl font-bold leading-tight">Understand what websites <span class="text-transparent bg-clip-text bg-gradient-to-r from-teal-300 to-cyan-400">actually know about you</span></h1>
+        <p class="text-gray-300 text-lg mt-5 leading-relaxed">PrivacySnapshot runs entirely inside your browser — it reveals hidden trackers, analytics, fingerprinting scripts, and every shady third‑party request. No data ever leaves your machine.</p>
+        <div class="mt-8 flex flex-wrap gap-4">
+          <button id="chromeInstall" class="btn-human text-white px-6 py-3 rounded-xl font-semibold flex items-center gap-2 shadow-xl"><i class="fab fa-chrome"></i> Add to Chrome – free</button>
+          <span class="text-gray-400 text-sm bg-black/30 px-4 py-2 rounded-full"><i class="fas fa-microchip"></i> 100% local scan</span>
+        </div>
+      </div>
+      <div class="flex-1 flex justify-center">
+        <div class="card-rough rounded-2xl p-5 w-64 text-center">
+          <canvas id="privacyCanvas" width="130" height="130" class="mx-auto"></canvas>
+          <div class="text-2xl font-black mt-2"><span id="scoreNum">0</span><span class="text-sm">/100</span></div>
+          <p class="text-xs text-cyan-300 mt-1">live privacy score</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- features -->
+    <div class="mb-24">
+      <div class="text-center mb-10"><span class="text-cyan-400 text-sm uppercase tracking-wider">deep inspection</span><h2 class="text-3xl md:text-4xl font-bold mt-1">What PrivacySnapshot detects</h2></div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
+        <div class="card-rough rounded-xl p-4 text-center"><i class="fas fa-chart-line text-2xl text-cyan-400 mb-2"></i><h3 class="font-bold">Trackers</h3><p class="text-gray-400 text-sm">Google, Meta, adtech</p></div>
+        <div class="card-rough rounded-xl p-4 text-center"><i class="fas fa-cookie-bite text-2xl text-cyan-400 mb-2"></i><h3 class="font-bold">Cookies</h3><p class="text-gray-400 text-sm">Cross‑site & tracking</p></div>
+        <div class="card-rough rounded-xl p-4 text-center"><i class="fas fa-fingerprint text-2xl text-cyan-400 mb-2"></i><h3 class="font-bold">Fingerprinting</h3><p class="text-gray-400 text-sm">Canvas, WebGL, audio</p></div>
+        <div class="card-rough rounded-xl p-4 text-center"><i class="fas fa-exchange-alt text-2xl text-cyan-400 mb-2"></i><h3 class="font-bold">3rd‑party requests</h3><p class="text-gray-400 text-sm">Every external call</p></div>
+        <div class="card-rough rounded-xl p-4 text-center"><i class="fas fa-chart-simple text-2xl text-cyan-400 mb-2"></i><h3 class="font-bold">Risk scoring</h3><p class="text-gray-400 text-sm">0–100 privacy grade</p></div>
+      </div>
+    </div>
+
+    <!-- how it works + mockup cards -->
+    <div class="mb-24">
+      <h2 class="text-3xl font-bold text-center mb-8">How it works – simple & local</h2>
+      <div class="grid md:grid-cols-3 gap-7">
+        <div class="card-rough rounded-2xl p-5"><div class="text-cyan-400 text-2xl mb-2">1</div><i class="fas fa-mouse-pointer text-xl"></i><h3 class="text-xl font-semibold mt-1">Scan current tab</h3><p class="text-gray-300 text-sm">Click the extension icon – PrivacySnapshot reads the page.</p></div>
+        <div class="card-rough rounded-2xl p-5"><div class="text-cyan-400 text-2xl mb-2">2</div><i class="fas fa-code-branch text-xl"></i><h3 class="text-xl font-semibold mt-1">Analyze scripts & requests</h3><p class="text-gray-300 text-sm">We inspect network logs, JS behaviors, and cookies.</p></div>
+        <div class="card-rough rounded-2xl p-5"><div class="text-cyan-400 text-2xl mb-2">3</div><i class="fas fa-file-alt text-xl"></i><h3 class="text-xl font-semibold mt-1">Generate privacy report</h3><p class="text-gray-300 text-sm">Readable summary + tracker list + risk score.</p></div>
+      </div>
+      <div class="grid md:grid-cols-3 gap-5 mt-10">
+        <div class="bg-black/30 p-3 rounded-xl border border-white/5"><i class="fas fa-chart-pie text-cyan-300"></i><div class="h-16 flex items-center text-sm">Trackers found: 14 · 3P requests: 62</div></div>
+        <div class="bg-black/30 p-3 rounded-xl border border-white/5"><i class="fas fa-fingerprint text-cyan-300"></i><div class="h-16 flex items-center text-sm">Canvas fingerprint · WebGL vendor</div></div>
+        <div class="bg-black/30 p-3 rounded-xl border border-white/5"><i class="fas fa-cookie text-cyan-300"></i><div class="h-16 flex items-center text-sm">7 tracking cookies identified</div></div>
+      </div>
+    </div>
+
+    <!-- why privacy matters (human tone) -->
+    <div class="bg-gray-900/40 rounded-2xl p-7 md:p-9 border-l-8 border-cyan-500 mb-20">
+      <i class="fas fa-quote-left text-4xl text-cyan-500/40 mb-3"></i>
+      <h2 class="text-2xl md:text-3xl font-bold">Why we built this – no BS</h2>
+      <div class="text-gray-300 space-y-3 mt-4 leading-relaxed">
+        <p>Over the last few years, I got tired of seeing popups that say “we value your privacy” while 50+ trackers load behind the scenes. Most people have no idea that every click, every hover, and even your battery level can be used to fingerprint you.</p>
+        <p>PrivacySnapshot is my honest attempt to give you a tool that actually shows the truth – locally, without sending a single byte to any server. It’s not about fear; it’s about awareness. When you know what’s happening, you can decide whether to accept it or fight back.</p>
+        <p>No cloud, no monthly fees, no data selling. Just a simple extension that works.</p>
+      </div>
+    </div>
+
+    <!-- FAQ -->
+    <div class="max-w-3xl mx-auto">
+      <h2 class="text-3xl font-bold text-center mb-6">You asked, we answer</h2>
+      <div class="space-y-4">
+        <details class="card-rough rounded-xl p-4"><summary class="cursor-pointer font-semibold flex justify-between"><span><i class="fas fa-database text-cyan-400 mr-2"></i> Does it collect my browsing data?</span><i class="fas fa-chevron-right text-sm"></i></summary><p class="text-gray-300 mt-3 pl-5">Never. The extension works 100% offline. No data leaves your computer – not even the URL you're scanning.</p></details>
+        <details class="card-rough rounded-xl p-4"><summary class="cursor-pointer font-semibold flex justify-between"><span><i class="fas fa-microchip text-cyan-400 mr-2"></i> Is scanning really local?</span><i class="fas fa-chevron-right text-sm"></i></summary><p class="text-gray-300 mt-3 pl-5">Yes. Every analysis uses Chrome's local APIs (webRequest, DOM inspection). No external servers involved.</p></details>
+        <details class="card-rough rounded-xl p-4"><summary class="cursor-pointer font-semibold flex justify-between"><span><i class="fas fa-gem text-cyan-400 mr-2"></i> Is it free forever?</span><i class="fas fa-chevron-right text-sm"></i></summary><p class="text-gray-300 mt-3 pl-5">Core features are completely free. No paywalls for privacy essentials. If we add advanced cloud features later, local version remains free.</p></details>
+      </div>
+    </div>
+  </main>
+
+  <footer class="border-t border-white/10 mt-20 py-7 text-center text-gray-500 text-sm flex flex-wrap justify-center gap-6">
+    <a href="privacy.html" class="hover:text-cyan-400">Privacy Policy</a>
+    <a href="contact.html">Contact</a>
+    <a href="terms.html">Terms of Use</a>
+    <span>© 2025 PrivacySnapshot – transparency first</span>
+  </footer>
+
+  <script>
+    // mobile menu
+    const menuBtn = document.getElementById('menuBtn');
+    const mobileMenu = document.getElementById('mobileMenu');
+    menuBtn?.addEventListener('click', () => {
+      if (mobileMenu.style.maxHeight && mobileMenu.style.maxHeight !== '0px') {
+        mobileMenu.style.maxHeight = '0px';
+      } else {
+        mobileMenu.style.maxHeight = mobileMenu.scrollHeight + 'px';
+      }
+    });
+    // animated privacy score canvas
+    const canvas = document.getElementById('privacyCanvas');
+    const ctx = canvas.getContext('2d');
+    const scoreSpan = document.getElementById('scoreNum');
+    let current = 0;
+    const target = 79;
+    function drawRing(percent){
+      ctx.clearRect(0,0,130,130);
+      const center=65, rad=52, start=-0.5*Math.PI;
+      const end=start+(percent/100)*2*Math.PI;
+      ctx.beginPath(); ctx.arc(center,center,rad,0,2*Math.PI); ctx.strokeStyle='#2d3748'; ctx.lineWidth=8; ctx.stroke();
+      ctx.beginPath(); ctx.arc(center,center,rad,start,end); ctx.strokeStyle='#2dd4bf'; ctx.lineWidth=8; ctx.lineCap='round'; ctx.stroke();
+    }
+    let step = setInterval(()=>{ if(current<target){ current+=Math.ceil((target-current)/25); if(current>target)current=target; scoreSpan.innerText=current; drawRing(current); } else clearInterval(step); }, 35);
+    document.getElementById('chromeInstall')?.addEventListener('click',()=> alert('🔒 Redirect to Chrome Web Store — coming soon. PrivacySnapshot is under review.'));
+  </script>
+</body>
+</html>

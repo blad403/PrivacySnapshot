@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://privacysnapshot.imran-laoui2010.workers.dev/sitemap.xml
